@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Images</title>
+</head>
+<body>
+    <h2>Uploaded Images</h2>
+    <table border="1" cellpadding="6">
+        <tr>
+            <th>Image</th>
+            <th>Name</th>
+            <th>Size (KB)</th>
+            <th>Notes</th>
+            <th>Action</th>
+        </tr>
+
+        {% for img in images %}
+        <tr>
+            <td><img src="{{ url_for('serve_image', filename=img['Name']) }}" width="100"></td>
+            <td>{{ img['Name'] }}</td>
+            <td>{{ img['Size (KB)'] }}</td>
+            <td>
+                <form action="/update" method="post">
+                    <input type="hidden" name="name" value="{{ img['Name'] }}">
+                    <input type="text" name="notes" value="{{ img['Notes'] }}">
+                    <button type="submit">Save</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+
+    <br>
+    <a href="/">⬅ Upload Another ZIP</a>
+</body>
+</html>
