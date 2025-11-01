@@ -2,7 +2,7 @@
 
 setup instructions
 
-python -m venv venv
+python -m venv venv_name
 
 #activate venv then install dependencies
 
