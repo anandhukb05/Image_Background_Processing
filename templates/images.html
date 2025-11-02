@@ -31,24 +31,24 @@
             <td>{{ loop.index }}</td>
             <td class="images">
           
-                <img src="{{ url_for('serve_image', filename=img['name']) }}"
+                <img src="{{ url_for('serve_image', filename=img['filename']) }}"
                 width="100"
                 style="cursor:pointer;"
                 data-bs-toggle="modal"
                 data-bs-target="#imageModal"
-                data-img="{{ url_for('serve_image', filename=img['name']) }}">
+                data-img="{{ url_for('serve_image', filename=img['filename']) }}">
             </td>
 
             <td class="images">
           
-                <img src="{{ url_for('serve_image', filename=img['name']) }}"
+                <img src="{{ url_for('serve_processed_image', filename=img['processed_image']) }}"
                 width="100"
                 style="cursor:pointer;"
                 data-bs-toggle="modal"
                 data-bs-target="#imageModal"
-                data-img="{{ url_for('serve_image', filename=img['name']) }}">
+                data-img="{{ url_for('serve_processed_image', filename=img['processed_image']) }}">
             </td>
-            <td>{{ img['name'] }}</td>
+            <td>{{ img['filename'] }}</td>
             <td>{{ img['size'] }}</td>
             <td>{{ img['date'] }}</td>
             <td>{{ img['time'] }}</td>
@@ -75,7 +75,6 @@
   </div>
 
 
-  <!-- JS to update modal image -->
   <script>
     const imageModal = document.getElementById('imageModal');
     imageModal.addEventListener('show.bs.modal', event => {

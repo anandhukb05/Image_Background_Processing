@@ -28,28 +28,28 @@ class ImageProcess():
             contrast = row.get("contrast", 1.0)
             sharpness = row.get("sharpness", 1.0)
 
-            img_path = os.path.join(self.image_folder_path, self.filename)
+            img_path = os.path.join(self.image_folder_path, filename)
 
             # checking image existing or not
             if not os.path.exists(img_path):
-                meta_df.loc[self.meta_df['filename'] == self.filename, ['status']] = ["file is missing"]
-                meta_df.to_csv("data.csv", index=False)
+                meta_df.loc[meta_df['filename'] == filename, ['status']] = ["file is missing"]
+                meta_df.to_csv(self.file_meta, index=False)
                 continue
 
             img = cv2.imread(img_path)
             if img is None:
                 meta_df.loc[meta_df['filename'] == filename, ['status']] = ["Unable to read"]
-                meta_df.to_csv("data.csv", index=False)
+                meta_df.to_csv(self.file_meta, index=False)
                 continue
 
             # Removing background
-            result_img, mask_img = self.remove_background(self.img)
+            result_img, mask_img = self.remove_background(img)
 
             # Center and resizing the image
             processed_img, mask_img = self.center_and_resize_with_fill_ratio(result_img, mask_img)
             if processed_img is None:
                 meta_df.loc[meta_df['filename'] == filename, ['status']] = ["Object not detected"]
-                meta_df.to_csv("data.csv", index=False)
+                meta_df.to_csv(self.file_meta, index=False)
                 continue
 
             # Enhancing the image with input metadata
@@ -71,19 +71,18 @@ class ImageProcess():
             # saving changes details of image
             fill_ratio_achieved = np.sum(mask_img > 0) / (mask_img.shape[0] * mask_img.shape[1])
             results_list.append({
-                "Image filename": filename,
-                "Brightness": brightness,
-                "Contrast": contrast,
-                "Sharpness": sharpness,
-                "Fill ratio achieved": round(fill_ratio_achieved, 3),
-                "Mask path": mask_path
+                "filename": filename,
+                "brightness": brightness,
+                "contrast": contrast,
+                "sharpness": sharpness,
+                "fill_ratio_achieved": round(fill_ratio_achieved, 3),
+                "mask_path": mask_path
             })
 
-            meta_df.loc[meta_df['filename'] == filename, ['status']] = ["Processed"]
-            meta_df.to_csv("data.csv", index=False)
+            meta_df.loc[meta_df['filename'] == filename, ['status', 'processed_image']] = ["Processed", f"{base_name}_processed.jpg"]
+            meta_df.to_csv(self.file_meta, index=False)
 
             pd.DataFrame(results_list).to_csv(OUTPUT_CSV, index=False)
-            print("\n🎯 Processing complete! Results saved to", OUTPUT_CSV)
 
     def remove_background(self, input_image):
         """

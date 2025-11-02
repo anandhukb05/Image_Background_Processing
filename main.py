@@ -4,13 +4,11 @@ import csv
 from flask import Flask, render_template, request, redirect, url_for, send_from_directory, flash
 from datetime import datetime
 import pandas as pd
+from image_processor.handler import ImageProcess
 
-# defining paths and folders
-UPLOAD_FOLDER = os.path.join('storage', 'raw_image')
-DATA_FOLDER = os.path.join('storage', 'meta_data')
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-os.makedirs(DATA_FOLDER, exist_ok=True)
-CSV_PATH = os.path.join(DATA_FOLDER, 'upload_details.csv')
+
+from config import UPLOAD_FOLDER, DATA_FOLDER, CSV_PATH, OUTPUT_DIR
+
 
 import re
 
@@ -30,6 +28,9 @@ def home():
 
 @app.route('/upload', methods=['POST'])
 def upload():
+
+    os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+    os.makedirs(DATA_FOLDER, exist_ok=True)
     msg = ""
 
     # checking all arguments existing
@@ -98,14 +99,13 @@ def upload():
         # Write to CSV
         with open(CSV_PATH, 'w', newline='', encoding='utf-8') as f:
             writer = csv.writer(f)
-            writer.writerow(['name', 'size', 'date', 'time', 'meta_file', 'status'])
+            writer.writerow(['filename', 'size', 'date', 'time', 'meta_file', 'status'])
             writer.writerows(image_data)
 
         # removing tempfile
         os.remove(zip_path)
 
     if csv_file.filename.lower().endswith('.csv'):
-
         filepath = os.path.join(DATA_FOLDER,  csv_file.filename.lower())
         csv_file.save(filepath)
 
@@ -126,7 +126,7 @@ def upload():
 
             missing_files = []
             for _, row in df.iterrows():
-                filename = row["Image Filename"]
+                filename = row["filename"]
                 img_path = os.path.join(UPLOAD_FOLDER, filename)
 
                 # checking image existing or not
@@ -137,12 +137,15 @@ def upload():
                 flash(f"Missing these images from folder : {', '.join(missing_files)}", 'error')
                 return redirect(url_for('home'))
 
-            #Save normalized CSV
+            #Save CSV
             df.to_csv(filepath, index=False)
 
         except Exception as e:
             flash(f"error {str(e)}", 'error')
             return redirect(url_for('home'))
+
+        ip_obj = ImageProcess(filepath, UPLOAD_FOLDER, CSV_PATH)
+        ip_obj.process_images()
 
     return redirect(url_for('show_images'))
 
@@ -155,15 +158,17 @@ def show_images():
         with open(CSV_PATH, newline='', encoding='utf-8') as f:
             reader = csv.DictReader(f)
             images = list(reader)
-            print(images)
     return render_template('images.html', images=images)
 
 
 @app.route('/uploads/<filename>')
 def serve_image(filename):
-    print("-----", filename)
     return send_from_directory(UPLOAD_FOLDER, filename)
 
+
+@app.route('/process/<filename>')
+def serve_processed_image(filename):
+    return send_from_directory(OUTPUT_DIR, filename)
 
 
 if __name__ == "__main__":
