@@ -31,7 +31,7 @@
         <div class=" position">
             <label class="text-center"><b>Upload the images zip file:</b></label>
             <br>
-            <form action="/upload" method="post" enctype="multipart/form-data">
+            <form action="/upload" method="post" enctype="multipart/form-data" onsubmit="disableButton()">
                 <div class="input-group mb-3">
                     <input type="file" class="form-control" name="zipfile" accept=".zip" required>  
                 </div>
@@ -45,11 +45,16 @@
                 <div class="input-group mb-3">
                     <input type="file" class="form-control" name="csv" accept=".csv" required>
                 </div>
-                <button type="submit" class="input-group-text bg-primary text-white"><b>Process</b></label>
+                <button id="submitBtn" type="submit" class="input-group-text bg-primary text-white"><b>Process</b></label>
             </form>
         </div>
     </div>
+  <script>
+    function disableButton() {
+    const btn = document.getElementById("submitBtn");
+    btn.disabled = true;
+    btn.innerText = "Processing...";
+}
 
-
-
+  </script>
 {% endblock %}
