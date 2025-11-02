@@ -81,7 +81,7 @@ def upload():
         current_datetime = datetime.now()
         # formatting date and time
         date = current_datetime.strftime("%Y-%m-%d")
-        time = current_datetime.strftime("%Y-%m-%d")
+        time = current_datetime.strftime("%H-%M-%S")
 
         for filename in os.listdir((UPLOAD_FOLDER)):
             if filename.lower().endswith(('.png', '.jpg', '.jpeg')):
