@@ -124,6 +124,19 @@ def upload():
                 flash(f"Missing required columns {list(missing)}", 'error')
                 return redirect(url_for('home'))
 
+            missing_files = []
+            for _, row in df.iterrows():
+                filename = row["Image Filename"]
+                img_path = os.path.join(UPLOAD_FOLDER, filename)
+
+                # checking image existing or not
+                if not os.path.exists(img_path):
+                    missing_files.append(filename)
+
+            if missing_files:
+                flash(f"Missing these images from folder : {', '.join(missing_files)}", 'error')
+                return redirect(url_for('home'))
+
             #Save normalized CSV
             df.to_csv(filepath, index=False)
 
