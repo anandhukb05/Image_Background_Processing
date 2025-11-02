@@ -1,6 +1,8 @@
 
 {% extends "header.html" %}
 
+{% block title %}Uploads{% endblock  %}
+
 {% block content %}
 
 <style>
@@ -11,11 +13,21 @@
 }
 </style>
 
+ {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for category, message in messages %}
+        <div class="alert alert-{{ 'success' if category == 'success' else 'danger' }} alert-dismissible fade show" role="alert">
+          {{ message }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+
 <br>
     <br>
     <br>
     <div class="w-100 h-100 position-absolute t-25 start-25">
-        <h1 class="m-2">Image Processor</h1>
         <div class=" position">
             <label class="text-center"><b>Upload the images zip file:</b></label>
             <br>
@@ -37,5 +49,7 @@
             </form>
         </div>
     </div>
+
+
 
 {% endblock %}
