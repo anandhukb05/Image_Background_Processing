@@ -17,6 +17,7 @@ app.config['TEMPLATES_AUTO_RELOAD'] = True
 def home():
     return render_template("index.html")
 
+
 # folders
 UPLOAD_FOLDER = 'storage'
 DATA_FOLDER = 'data'
@@ -26,58 +27,66 @@ os.makedirs(DATA_FOLDER, exist_ok=True)
 CSV_PATH = os.path.join(DATA_FOLDER, 'images.csv')
 
 
-
 @app.route('/upload', methods=['POST'])
-def upload_zip():
+def upload():
+
+    #checking all arguments existing
     if 'zipfile' not in request.files:
-        return "No file part", 400
-    file = request.files['zipfile']
+        msg= "No image file"
 
-    if file.filename == '':
-        return "No selected file", 400
+    if 'csv' not in request.files:
+        msg= "No csv file"
 
-    if not file.filename.lower().endswith('.zip'):
-        return "Please upload a .zip file", 400
+    img_file = request.files['zipfile']
+    csv_file = request.files['csv']
 
-    folder = normalize(file.filename.split(".")[0])
-        
-    zip_path = os.path.join(UPLOAD_FOLDER, 'uploaded.zip')
-    file.save(zip_path)
-    
+    # validating request values
+
+    if not img_file.filename.lower().endswith('.zip'):
+        msg = "Please upload a .zip file"
+
+    if not csv_file.filename.lower().endswith('.csv'):
+        msg = "Please upload a .csv file"
+
+    folder = normalize(img_file.filename.split(".")[0])
 
 
-    with zipfile.ZipFile(zip_path, 'r') as zip_ref:
-        for member in zip_ref.infolist():
-            # Skip directories
-            if member.is_dir():
-                continue
-            
-            # Get only the filename (remove folder paths inside ZIP)
-            filename = os.path.basename(member.filename)
-            if not filename:
-                continue  # skip empty names
-            
-            # Target file path (flattened)
-            target_path = os.path.join(UPLOAD_FOLDER, filename)
-            
-            # Extract the file
-            with zip_ref.open(member) as source, open(target_path, "wb") as target:
-                target.write(source.read())
-    # Collect image details
-    image_data = []
-    for filename in os.listdir((UPLOAD_FOLDER)):
-        print("--- filename ---", filename)
-        if filename.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.bmp')):
-            path = os.path.join(UPLOAD_FOLDER, filename)
-            size_kb = round(os.path.getsize(path) / 1024, 2)
-            print("---- info ---", [filename, size_kb, ""])
-            image_data.append([filename, size_kb, ""])  # last column for user notes
+    if img_file.filename.lower().endswith('.zip'):
+        zip_path = os.path.join(UPLOAD_FOLDER, 'uploaded.zip')
+        img_file.save(zip_path)
 
-    # Write to CSV
-    with open(CSV_PATH, 'w', newline='', encoding='utf-8') as f:
-        writer = csv.writer(f)
-        writer.writerow(['Name', 'Size (KB)', 'Notes'])
-        writer.writerows(image_data)
+        with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+            for member in zip_ref.infolist():
+                # Skip directories
+                if member.is_dir():
+                    continue
+                
+                # Get only the filename (remove folder paths inside ZIP)
+                filename = os.path.basename(member.filename)
+                if not filename:
+                    continue  # skip empty names
+                
+                # Target file path (flattened)
+                target_path = os.path.join(UPLOAD_FOLDER, filename)
+                
+                # Extract the file
+                with zip_ref.open(member) as source, open(target_path, "wb") as target:
+                    target.write(source.read())
+        # Collect image details
+        image_data = []
+        for filename in os.listdir((UPLOAD_FOLDER)):
+            print("--- filename ---", filename)
+            if filename.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.bmp')):
+                path = os.path.join(UPLOAD_FOLDER, filename)
+                size_kb = round(os.path.getsize(path) / 1024, 2)
+                print("---- info ---", [filename, size_kb, ""])
+                image_data.append([filename, size_kb, ""])  # last column for user notes
+
+        # Write to CSV
+        with open(CSV_PATH, 'w', newline='', encoding='utf-8') as f:
+            writer = csv.writer(f)
+            writer.writerow(['Name', 'Size (KB)', 'Notes'])
+            writer.writerows(image_data)
 
     return redirect(url_for('show_images'))
 
