@@ -1,33 +1,89 @@
 <!DOCTYPE html>
 {% extends "header.html" %}
 
+{% block content %}
+
+    <style>
+        table td.fit,
+        .table th.fit {
+        white-space: nowrap; /* Prevents text from wrapping */
+        width: 1%; /* Forces the column to take minimum width */
+        }
+</style>
+
     <h2>Uploaded Images</h2>
-    <table border="1" cellpadding="6">
+
+    <table class="table" border="1" cellpadding="6">
         <tr>
-            <th>Image</th>
+            <th class="fit">SI No.</th>
+            <th >Original</th>
+            <th >Processed</th>
             <th>Name</th>
             <th>Size (KB)</th>
-            <th>Notes</th>
-            <th>Action</th>
+            <th>Date</th>
+            <th>Time</th>
+            <th>Status</th>
+            <th></th>
         </tr>
 
         {% for img in images %}
         <tr>
-            <td><img src="{{ url_for('serve_image', filename=img['Name']) }}" width="100"></td>
-            <td>{{ img['Name'] }}</td>
-            <td>{{ img['Size (KB)'] }}</td>
+            <td>{{ loop.index }}</td>
+            <td class="images">
+          
+                <img src="{{ url_for('serve_image', filename=img['name']) }}"
+                width="100"
+                style="cursor:pointer;"
+                data-bs-toggle="modal"
+                data-bs-target="#imageModal"
+                data-img="{{ url_for('serve_image', filename=img['name']) }}">
+            </td>
+
+            <td class="images">
+          
+                <img src="{{ url_for('serve_image', filename=img['name']) }}"
+                width="100"
+                style="cursor:pointer;"
+                data-bs-toggle="modal"
+                data-bs-target="#imageModal"
+                data-img="{{ url_for('serve_image', filename=img['name']) }}">
+            </td>
+            <td>{{ img['name'] }}</td>
+            <td>{{ img['size'] }}</td>
+            <td>{{ img['date'] }}</td>
+            <td>{{ img['time'] }}</td>
+            <td>{{ img['status'] }}</td>
             <td>
-                <form action="/update" method="post">
-                    <input type="hidden" name="name" value="{{ img['Name'] }}">
-                    <input type="text" name="notes" value="{{ img['Notes'] }}">
-                    <button type="submit">Save</button>
-                </form>
+                
             </td>
         </tr>
         {% endfor %}
     </table>
 
-    <br>
-    <a href="/">⬅ Upload Another ZIP</a>
-</body>
-</html>
+      <div class="modal fade" id="imageModal" tabindex="-1" aria-labelledby="imageModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="imageModalLabel">Image Preview</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body text-center">
+          <img id="modalImage" src="" alt="Preview" class="img-fluid rounded">
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- JS to update modal image -->
+  <script>
+    const imageModal = document.getElementById('imageModal');
+    imageModal.addEventListener('show.bs.modal', event => {
+      const trigger = event.relatedTarget;
+      const imgSrc = trigger.getAttribute('data-img');
+      const modalImg = imageModal.querySelector('#modalImage');
+      modalImg.src = imgSrc;
+    });
+  </script>
+
+{% endblock  %}

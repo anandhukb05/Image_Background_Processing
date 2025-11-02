@@ -98,7 +98,7 @@ def upload():
         # Write to CSV
         with open(CSV_PATH, 'w', newline='', encoding='utf-8') as f:
             writer = csv.writer(f)
-            writer.writerow(['name', 'size(KB)', 'date', 'time', 'meta_file', 'status'])
+            writer.writerow(['name', 'size', 'date', 'time', 'meta_file', 'status'])
             writer.writerows(image_data)
 
         # removing tempfile
@@ -142,34 +142,14 @@ def show_images():
         with open(CSV_PATH, newline='', encoding='utf-8') as f:
             reader = csv.DictReader(f)
             images = list(reader)
+            print(images)
     return render_template('images.html', images=images)
-
-
-@app.route('/update', methods=['POST'])
-def update_csv():
-    data = request.form
-    rows = []
-    # Read existing CSV
-    with open(CSV_PATH, newline='', encoding='utf-8') as f:
-        reader = csv.DictReader(f)
-        for row in reader:
-            if row['Name'] == data['name']:
-                row['Notes'] = data['notes']
-            rows.append(row)
-
-    # Rewrite CSV
-    with open(CSV_PATH, 'w', newline='', encoding='utf-8') as f:
-        writer = csv.DictWriter(f, fieldnames=['Name', 'Size (KB)', 'Notes'])
-        writer.writeheader()
-        writer.writerows(rows)
-
-    return redirect(url_for('show_images'))
 
 
 @app.route('/uploads/<filename>')
 def serve_image(filename):
+    print("-----", filename)
     return send_from_directory(UPLOAD_FOLDER, filename)
-
 
 
 
