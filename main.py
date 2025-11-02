@@ -1,25 +1,20 @@
 import os
-import zipfile
 import csv
-from flask import Flask, render_template, request, redirect, url_for, send_from_directory, flash
-from datetime import datetime
 import pandas as pd
+from utility import normalize, file_extracter
 from image_processor.handler import ImageProcess
-
-
 from config import UPLOAD_FOLDER, DATA_FOLDER, CSV_PATH, OUTPUT_DIR
+from flask import (
+                        Flask, render_template, request,
+                        redirect, url_for, send_from_directory,
+                        flash)
 
-
-import re
-
-pattern = re.compile('[\W_]+')
-def normalize(name):
-    return pattern.sub('_', name.strip()).lower().strip()
 
 app = Flask(__name__)
-#Auto-reload templates without restarting the server
+# Auto-reload templates without restarting the server
 app.config['TEMPLATES_AUTO_RELOAD'] = True
 app.secret_key = "erwt67q8w8s"
+
 
 @app.route("/", methods=["GET"])
 def home():
@@ -59,48 +54,12 @@ def upload():
         zip_path = os.path.join(UPLOAD_FOLDER, 'uploaded.zip')
         img_file.save(zip_path)
 
-        with zipfile.ZipFile(zip_path, 'r') as zip_ref:
-            for member in zip_ref.infolist():
-                # Skip directories
-                if member.is_dir():
-                    continue
-
-                # Get only the filename (remove folder paths inside ZIP)
-                filename = os.path.basename(member.filename)
-                if not filename:
-                    # skip empty names
-                    continue
-
-                # Target file path (flattened)
-                target_path = os.path.join(UPLOAD_FOLDER, filename)
-
-                # Extract the file
-                with zip_ref.open(member) as source, open(target_path, "wb") as target:
-                    target.write(source.read())
-        # Collect image details
-        image_data = []
-        current_datetime = datetime.now()
-        # formatting date and time
-        date = current_datetime.strftime("%Y-%m-%d")
-        time = current_datetime.strftime("%H-%M-%S")
-
-        for filename in os.listdir((UPLOAD_FOLDER)):
-            if filename.lower().endswith(('.png', '.jpg', '.jpeg')):
-                path = os.path.join(UPLOAD_FOLDER, filename)
-                size_kb = round(os.path.getsize(path) / 1024, 2)
-                image_data.append([
-                                    filename,
-                                    size_kb,
-                                    date,
-                                    time,
-                                    csv_file.filename.lower(),
-                                    "Not Processed"])
-
-        # Write to CSV
-        with open(CSV_PATH, 'w', newline='', encoding='utf-8') as f:
-            writer = csv.writer(f)
-            writer.writerow(['filename', 'size', 'date', 'time', 'meta_file', 'status'])
-            writer.writerows(image_data)
+        # unzip and storing file information
+        file_extracter(
+                            zip_path,
+                            UPLOAD_FOLDER,
+                            csv_file.filename.lower(),
+                            CSV_PATH)
 
         # removing tempfile
         os.remove(zip_path)
@@ -116,10 +75,15 @@ def upload():
             # Normalize column names
             df.columns = df.columns.map(normalize)
 
-            # Check for required columns
-            required_columns = {"filename",	"brightness", "contrast", "sharpness"}
+            required_columns = {
+                                    "filename",
+                                    "brightness",
+                                    "contrast",
+                                    "sharpness"
+                                }
 
             missing = required_columns - set(df.columns)
+            # Check for required columns
             if missing:
                 flash(f"Missing required columns {list(missing)}", 'error')
                 return redirect(url_for('home'))
@@ -137,7 +101,7 @@ def upload():
                 flash(f"Missing these images from folder : {', '.join(missing_files)}", 'error')
                 return redirect(url_for('home'))
 
-            #Save CSV
+            # Save CSV
             df.to_csv(filepath, index=False)
 
         except Exception as e:
